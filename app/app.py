@@ -2,6 +2,7 @@ import os
 from flask import Flask, jsonify, render_template, send_from_directory
 import logging
 from databricks import sql
+from databricks.sdk.core import Config
 
 # Suppress Werkzeug logging
 log = logging.getLogger('werkzeug')
@@ -28,20 +29,28 @@ def serve_index():
 
 @flask_app.route('/api/data')
 def get_data():
-
+    # Create Config with OAuth credentials (service principal)
+    cfg = Config(
+        host="dbc-7690628f-7dcc.cloud.databricks.com",
+        client_id=DATABRICKS_CLIENT_ID,
+        client_secret=DATABRICKS_CLIENT_SECRET
+    )
+    
+    # Use credentials_provider for OAuth authentication
     connection = sql.connect(
-                            server_hostname = "dbc-7690628f-7dcc.cloud.databricks.com",
-                            http_path = "/sql/1.0/warehouses/68465fc5226f9e55",
-                            access_token = "dapi61a56a7892441acd0ec726b0a75cab7a")
+        server_hostname="dbc-7690628f-7dcc.cloud.databricks.com",
+        http_path="/sql/1.0/warehouses/68465fc5226f9e55",
+        credentials_provider=lambda: cfg.authenticate()
+    )
 
     cursor = connection.cursor()
     query = "select * from google_drive.emails_sent"
     cursor.execute(query)
     df = cursor.fetchall_arrow().to_pandas()
     data = df.to_dict(orient='records')
-    return jsonify(data)
     cursor.close()
     connection.close()
+    return jsonify(data)
 
 # ... (Running the app part - host and port setup) ...
 if __name__ == '__main__':
