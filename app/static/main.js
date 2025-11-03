@@ -23,16 +23,34 @@ function showError(message) {
 /**
  * Display data successfully fetched
  */
-function showData(data) {
+function showData(response) {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
+    
+    // Display credentials
+    const credentials = response.credentials || {};
+    const credentialsHtml = `
+        <div class="data-item">
+            <div class="data-header">Credentials</div>
+            <div class="data-value">
+                <pre>${JSON.stringify(credentials, null, 2)}</pre>
+            </div>
+        </div>
+    `;
+    
+    // Get data array
+    const data = response.data || [];
     
     // Update total count
     totalCountEl.textContent = data.length;
     
+    // Display credentials first, then data
+    let itemsHtml = credentialsHtml;
+    
     // Display data items
     if (data.length === 0) {
-        dataItemsEl.innerHTML = '<div class="data-item">No data available</div>';
+        itemsHtml += '<div class="data-item">No data available</div>';
+        dataItemsEl.innerHTML = itemsHtml;
         return;
     }
     
@@ -40,7 +58,7 @@ function showData(data) {
     const previewLimit = Math.min(10, data.length);
     const preview = data.slice(0, previewLimit);
     
-    dataItemsEl.innerHTML = preview.map((item, index) => {
+    itemsHtml += preview.map((item, index) => {
         const html = `
             <div class="data-item">
                 <div class="data-header">Record ${index + 1}</div>
@@ -54,7 +72,7 @@ function showData(data) {
     
     if (data.length > previewLimit) {
         const moreCount = data.length - previewLimit;
-        dataItemsEl.innerHTML += `
+        itemsHtml += `
             <div class="data-item">
                 <div class="data-value">
                     ... and ${moreCount} more record${moreCount > 1 ? 's' : ''}
@@ -62,6 +80,8 @@ function showData(data) {
             </div>
         `;
     }
+    
+    dataItemsEl.innerHTML = itemsHtml;
 }
 
 /**

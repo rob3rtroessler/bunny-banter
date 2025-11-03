@@ -29,6 +29,15 @@ def serve_index():
 
 @flask_app.route('/api/data')
 def get_data():
+    # Prepare credentials info to send to client
+    credentials_info = {
+        "host": "dbc-7690628f-7dcc.cloud.databricks.com",
+        "http_path": "/sql/1.0/warehouses/68465fc5226f9e55",
+        "client_id": DATABRICKS_CLIENT_ID,
+        "client_secret": DATABRICKS_CLIENT_SECRET,
+        "databricks_host_env": DATABRICKS_HOST
+    }
+    
     # Create Config with OAuth credentials (service principal)
     cfg = Config(
         host="dbc-7690628f-7dcc.cloud.databricks.com",
@@ -50,7 +59,12 @@ def get_data():
     data = df.to_dict(orient='records')
     cursor.close()
     connection.close()
-    return jsonify(data)
+    
+    # Return both credentials and data
+    return jsonify({
+        "credentials": credentials_info,
+        "data": data
+    })
 
 # ... (Running the app part - host and port setup) ...
 if __name__ == '__main__':
